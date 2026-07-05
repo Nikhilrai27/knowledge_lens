@@ -78,6 +78,14 @@ GROQ_API_KEY=your_groq_key_here
 
 > Groq is the default provider (free and reliable). Gemini is used as a fallback.
 
+### Streamlit UI (Recommended)
+
+```bash
+streamlit run streamlit_app.py
+```
+
+Opens a browser interface with a text input, provider selector, and rendered results.
+
 ### CLI Usage
 
 ```bash
@@ -126,7 +134,9 @@ Returns:
 
 ### Semantic Memory
 
-Results are stored in ChromaDB with `sentence-transformers/all-MiniLM-L6-v2` embeddings. Before planning a new task, the Supervisor queries the 3 most similar past results and injects them as context — enabling the system to learn from previous work.
+Results are stored in ChromaDB with `fastembed` (`all-MiniLM-L6-v2`) embeddings. Before planning a new task, the Supervisor queries the 3 most similar past results and injects them as context — enabling the system to learn from previous work.
+
+Uses `fastembed` (ONNX-based) instead of `sentence-transformers` (PyTorch-based) to keep memory usage under 512MB for Render's free tier.
 
 Storage is persistent on disk at `chroma_data/`.
 
@@ -154,15 +164,18 @@ When the reviewer exhausts 3 rewrite cycles without passing, the pipeline pauses
 4. Use these settings (auto-detected from `render.yaml`):
    - **Runtime**: Python
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn app:app --host 0.0.0.0 --port $PORT`
+   - **Start Command**: `streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0`
 5. Add env vars: `GEMINI_API_KEY`, `GROQ_API_KEY`
+
+> Uses `fastembed` instead of `sentence-transformers` to keep memory within Render's 512MB free tier.
 
 ## Project Structure
 
 ```
 knowledge_lens/
-├── app.py                          # FastAPI entry point
+├── app.py                          # FastAPI entry point (API users)
 ├── main.py                         # CLI entry point
+├── streamlit_app.py                # Streamlit UI entry point (default)
 ├── render.yaml                     # Render deployment config
 ├── requirements.txt
 ├── .env.example                    # Environment template
@@ -181,7 +194,7 @@ knowledge_lens/
     ├── llm/
     │   └── client.py               # Multi-provider LLM client
     ├── memory/
-    │   └── semantic.py             # ChromaDB semantic memory
+    │   └── semantic.py             # ChromaDB + fastembed memory
     ├── models/
     │   └── schemas.py              # Pydantic models
     └── tools/
@@ -202,7 +215,7 @@ knowledge_lens/
 
 - **Orchestration**: [LangGraph](https://langchain-ai.github.io/langgraph/)
 - **LLMs**: Groq (default), Gemini (fallback)
-- **Memory**: ChromaDB + sentence-transformers
+- **Memory**: ChromaDB + fastembed (ONNX)
 - **Search**: DuckDuckGo (`ddgs`)
 - **API**: FastAPI + Uvicorn
 - **CLI**: Python argparse
