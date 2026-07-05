@@ -58,7 +58,9 @@ def build_workflow(llm: LLMClient):
         if state["review_passed"]:
             return "store"
         if state["iterations"] >= state["max_iterations"]:
-            return "human"
+            if state.get("human_gate", True):
+                return "human"
+            return "store"
         return "rewrite"
 
     builder = StateGraph(AgentState)

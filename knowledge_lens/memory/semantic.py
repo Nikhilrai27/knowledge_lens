@@ -1,6 +1,6 @@
 import os
 
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 import chromadb
 
 
@@ -9,13 +9,13 @@ CHROMA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "chroma_data")
 
 class SemanticMemory:
     def __init__(self, collection_name: str = "task_memory"):
-        self.encoder = SentenceTransformer("all-MiniLM-L6-v2")
+        self.encoder = TextEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
         os.makedirs(CHROMA_DIR, exist_ok=True)
         self.client = chromadb.PersistentClient(path=CHROMA_DIR)
         self.collection = self.client.get_or_create_collection(name=collection_name)
 
     def store(self, task: str, document: str, score: int):
-        embedding = self.encoder.encode(task).tolist()
+        embedding = list(self.encoder.embed(task))[0].tolist()
         doc_id = f"task_{abs(hash(task))}"
         self.collection.upsert(
             ids=[doc_id],
@@ -28,7 +28,7 @@ class SemanticMemory:
         count = self.collection.count()
         if count == 0:
             return []
-        embedding = self.encoder.encode(task).tolist()
+        embedding = list(self.encoder.embed(task))[0].tolist()
         results = self.collection.query(
             query_embeddings=[embedding], n_results=min(n, count)
         )
