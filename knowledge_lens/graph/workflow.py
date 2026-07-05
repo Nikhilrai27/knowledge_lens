@@ -51,8 +51,8 @@ def build_workflow(llm: LLMClient):
             return {}
         if choice == "f":
             fb = input("Feedback for writer: ").strip()
-            return {"review_feedback": fb, "_human_retry": True}
-        return {"review_feedback": "Rejected by user.", "_human_approved": False}
+            return {"review_feedback": fb, "_human_retry": True, "iterations": 0}
+        return {"review_feedback": "Rejected by user."}
 
     def decide_next(state: AgentState) -> str:
         if state["review_passed"]:

@@ -1,5 +1,4 @@
 import os
-import shutil
 
 from sentence_transformers import SentenceTransformer
 import chromadb

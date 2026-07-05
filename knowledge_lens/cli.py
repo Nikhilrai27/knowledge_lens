@@ -21,7 +21,6 @@ def run_task(task: str, provider: str = "groq") -> dict:
         "iterations": 0,
         "max_iterations": 3,
         "_human_retry": False,
-        "_human_approved": True,
     }
 
     return graph.invoke(initial_state)

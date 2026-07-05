@@ -13,4 +13,3 @@ class AgentState(TypedDict):
     iterations: int
     max_iterations: int
     _human_retry: bool
-    _human_approved: bool
