@@ -48,6 +48,8 @@ def main():
             print("=" * 60)
             print(f"Review score: {result.get('review_score', 'N/A')}/10")
             print(f"Iterations: {result.get('iterations', 0)}")
+            if result.get("review_feedback"):
+                print(f"Review feedback: {result['review_feedback']}")
     else:
         task = " ".join(sys.argv[1:])
         result = run_task(task)
@@ -57,3 +59,5 @@ def main():
         print("=" * 60)
         print(f"Review score: {result.get('review_score', 'N/A')}/10")
         print(f"Iterations: {result.get('iterations', 0)}")
+        if result.get("review_feedback"):
+            print(f"Review feedback: {result['review_feedback']}")
