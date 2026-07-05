@@ -8,9 +8,18 @@ def write(state: AgentState, llm: LLMClient) -> dict:
 Analysis:
 {state['analysis']}
 
-Task: {state['task']}
+Task: {state['task']}"""
 
-Write a comprehensive document that addresses the original task. Use markdown formatting."""
+    if state.get("review_feedback") and state.get("document"):
+        prompt += f"""
+
+The previous version of this document received this feedback:
+{state['review_feedback']}
+
+Please revise the document to address each piece of feedback. Here is the previous version:
+{state['document']}"""
+
+    prompt += "\n\nWrite a comprehensive document that addresses the original task. Use markdown formatting."
 
     result = llm.generate(prompt)
     return {"document": result}
