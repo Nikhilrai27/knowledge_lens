@@ -5,8 +5,8 @@ from .graph.workflow import build_workflow
 from .llm.client import LLMClient
 
 
-def run_task(task: str) -> dict:
-    llm = LLMClient()
+def run_task(task: str, provider: str = "groq") -> dict:
+    llm = LLMClient(provider=provider)
     graph = build_workflow(llm)
 
     initial_state: AgentState = {
@@ -20,6 +20,8 @@ def run_task(task: str) -> dict:
         "review_passed": False,
         "iterations": 0,
         "max_iterations": 3,
+        "_human_retry": False,
+        "_human_approved": True,
     }
 
     return graph.invoke(initial_state)

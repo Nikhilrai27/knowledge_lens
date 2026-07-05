@@ -12,3 +12,5 @@ class AgentState(TypedDict):
     review_passed: bool
     iterations: int
     max_iterations: int
+    _human_retry: bool
+    _human_approved: bool

@@ -37,9 +37,28 @@ def build_workflow(llm: LLMClient):
         )
         return {}
 
+    def human_node(state: AgentState) -> dict:
+        print("\n=== Human Approval Required ===")
+        print(f"Review score: {state['review_score']}/10 (max iterations reached)")
+        print(f"Feedback: {state['review_feedback']}")
+        print("\nHow do you want to proceed?")
+        print("  a - Approve and finish")
+        print("  f - Provide feedback and retry writer")
+        print("  r - Reject")
+        choice = input("> ").strip().lower()
+
+        if choice == "a":
+            return {}
+        if choice == "f":
+            fb = input("Feedback for writer: ").strip()
+            return {"review_feedback": fb, "_human_retry": True}
+        return {"review_feedback": "Rejected by user.", "_human_approved": False}
+
     def decide_next(state: AgentState) -> str:
-        if state["review_passed"] or state["iterations"] >= state["max_iterations"]:
-            return "end"
+        if state["review_passed"]:
+            return "store"
+        if state["iterations"] >= state["max_iterations"]:
+            return "human"
         return "rewrite"
 
     builder = StateGraph(AgentState)
@@ -49,6 +68,7 @@ def build_workflow(llm: LLMClient):
     builder.add_node("analyze", analyze_node)
     builder.add_node("write", write_node)
     builder.add_node("review", review_node)
+    builder.add_node("human", human_node)
     builder.add_node("store", store_node)
 
     builder.set_entry_point("plan")
@@ -61,7 +81,18 @@ def build_workflow(llm: LLMClient):
     builder.add_conditional_edges(
         "review",
         decide_next,
-        {"end": "store", "rewrite": "write"},
+        {"store": "store", "rewrite": "write", "human": "human"},
+    )
+
+    def after_human(state: AgentState) -> str:
+        if state.get("_human_retry"):
+            return "rewrite"
+        return "store"
+
+    builder.add_conditional_edges(
+        "human",
+        after_human,
+        {"store": "store", "rewrite": "write"},
     )
 
     builder.add_edge("store", END)
