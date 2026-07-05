@@ -6,6 +6,7 @@ from ..agents.reviewer import review
 from ..agents.supervisor import create_plan
 from ..agents.writer import write
 from ..llm.client import LLMClient
+from ..memory.semantic import memory
 from .state import AgentState
 
 
@@ -28,6 +29,14 @@ def build_workflow(llm: LLMClient):
     def review_node(state: AgentState) -> dict:
         return review(state, llm)
 
+    def store_node(state: AgentState) -> dict:
+        memory.store(
+            task=state["task"],
+            document=state.get("document", ""),
+            score=state.get("review_score", 0),
+        )
+        return {}
+
     def decide_next(state: AgentState) -> str:
         if state["review_passed"] or state["iterations"] >= state["max_iterations"]:
             return "end"
@@ -40,6 +49,7 @@ def build_workflow(llm: LLMClient):
     builder.add_node("analyze", analyze_node)
     builder.add_node("write", write_node)
     builder.add_node("review", review_node)
+    builder.add_node("store", store_node)
 
     builder.set_entry_point("plan")
 
@@ -51,7 +61,9 @@ def build_workflow(llm: LLMClient):
     builder.add_conditional_edges(
         "review",
         decide_next,
-        {"end": END, "rewrite": "write"},
+        {"end": "store", "rewrite": "write"},
     )
+
+    builder.add_edge("store", END)
 
     return builder.compile()

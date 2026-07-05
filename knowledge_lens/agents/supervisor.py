@@ -1,11 +1,17 @@
 from ..llm.client import LLMClient
 from ..graph.state import AgentState
+from ..memory.semantic import memory
 
 
 def create_plan(state: AgentState, llm: LLMClient) -> dict:
+    past = memory.query(state["task"])
+    memory_context = ""
+    if past:
+        memory_context = "\n\nSimilar past task outputs for reference:\n" + "\n---\n".join(past[:2])
+
     prompt = f"""You are a task supervisor. Decompose the following task into a step-by-step execution plan.
 
-Task: {state['task']}
+Task: {state['task']}{memory_context}
 
 Return a JSON array of steps, each with:
 - "step": step number
