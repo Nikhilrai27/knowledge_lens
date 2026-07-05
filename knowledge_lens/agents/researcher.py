@@ -1,3 +1,5 @@
+import sys
+
 from ..llm.client import LLMClient
 from ..graph.state import AgentState
 from ..tools.web_search import web_search
@@ -14,9 +16,10 @@ Format your findings as a well-structured research report."""
 
     try:
         search_results = web_search(state["task"])
-        prompt += f"\n\nWeb search results:\n{search_results}\n\nIncorporate the above web search results into your findings."
-    except Exception:
-        pass
+        if search_results and search_results != "No search results found.":
+            prompt += f"\n\nWeb search results:\n{search_results}\n\nIncorporate the above web search results into your findings."
+    except Exception as e:
+        print(f"Warning: Web search failed ({e}). Proceeding with LLM knowledge only.", file=sys.stderr)
 
     result = llm.generate(prompt)
     return {"research_results": result}
